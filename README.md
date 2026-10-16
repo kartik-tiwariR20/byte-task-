@@ -2,8 +2,9 @@
 
 Reads three consecutive English manga pages and returns the story text in reading order, with a speaker label on every line. The same character keeps the same label across all three pages.
 
-**Live app:** `<paste your Streamlit link here>`
-**Trained adapter:** `<paste your Hugging Face link here>`
+**Live app:** `https://bytedemourl.streamlit.app/`
+
+**Model used for the submission:** Qwen3-VL-8B with a LoRA adapter fine-tuned on our labelled sequences (run v3 below). The test predictions, the adapter and this app all come from that run. We also trained a larger Qwen3-VL-32B model as an experiment (run v4). It scored higher on the held-out data, but it is not part of the submission.
 
 ## What the app does
 
@@ -41,23 +42,29 @@ To deploy: push this repo to GitHub, open share.streamlit.io, sign in with GitHu
 
 ## Results
 
-Scores come from the task's `score.py` on 10 development sequences that were kept out of training.
+Every run below was scored with the task's `score.py` on the same 10 development sequences, which were kept out of training. "No tuning" means the model ran with our prompt and no training.
 
-| Model | Text recovery (`text_order_score`) | Speaker + text (`balanced_joint_f1`) |
-|---|---|---|
-| Qwen2.5-VL-7B, no tuning | 0.404 | 0.157 |
-| Qwen2.5-VL-7B + LoRA (v1) | 0.530 | 0.250 |
-| Qwen2.5-VL-7B + LoRA, higher resolution (v2) | 0.562 | 0.250 |
-| Qwen3-VL-8B, no tuning | 0.139 | 0.038 |
-| **Qwen3-VL-8B + LoRA (v3, submitted)** | **0.816** | **0.463** |
+| Run | Model | Text recovery (`text_order_score`) | Speaker + text (`balanced_joint_f1`) | Speaker accuracy on matched text | `joint_f1` | Token coverage |
+|---|---|---|---|---|---|---|
+| v1, no tuning | Qwen2.5-VL-7B | 0.404 | 0.157 | 0.531 | 0.257 | 0.440 |
+| v1 | Qwen2.5-VL-7B + LoRA | 0.530 | 0.250 | 0.617 | 0.423 | 0.608 |
+| v2, no tuning | Qwen2.5-VL-7B, higher resolution | 0.442 | 0.195 | 0.590 | 0.337 | 0.510 |
+| v2 | Qwen2.5-VL-7B + LoRA, higher resolution | 0.562 | 0.250 | 0.583 | 0.476 | 0.631 |
+| v3, no tuning | Qwen3-VL-8B | 0.139 | 0.038 | 0.116 | 0.073 | 0.136 |
+| **v3, submitted** | **Qwen3-VL-8B + LoRA** | **0.816** | **0.463** | **0.706** | **0.678** | **0.858** |
+| v4, no tuning (experiment) | Qwen3-VL-32B | 0.463 | 0.339 | 0.724 | 0.457 | 0.573 |
+| v4 (experiment, not submitted) | Qwen3-VL-32B + LoRA | 0.867 | 0.551 | 0.773 | 0.754 | 0.871 |
+
+The two main scores are text recovery and speaker plus text. The other columns are the task's remaining metrics.
 
 Facts to keep in mind when reading the table:
 
 - Ten sequences is a small sample, so the numbers are rough.
-- Early stopping and the choice of the best epoch used the same 10 sequences, so the v3 scores are slightly optimistic.
-- The untuned Qwen3-VL-8B produced no text at all on 8 of the 10 sequences, so its row measures the missing output format, not its reading ability.
-- v3 training used a LoRA of rank 32, a learning rate of 1e-4, 70 training sequences and early stopping after 3 rising validation losses. It stopped at epoch 7 and restored epoch 4, which had the lowest validation loss (0.131).
-- Speaker consistency is the weakest part. Text recovery is about 0.82, but speaker plus text is 0.46.
+- Early stopping and the choice of the best epoch used the same 10 sequences, so the LoRA scores are slightly optimistic.
+- The untuned Qwen3-VL-8B produced no text at all on 8 of the 10 sequences, so its row measures the missing output format, not its reading ability. The untuned 32B followed the format, so it is the fairer baseline for the LoRA gain.
+- The v1 LoRA used rank 16 and 3 epochs. v2 added a higher image resolution, rank 32 and early stopping. v3 and v4 changed only the model.
+- v3, the submitted run, stopped at epoch 7 and restored epoch 4, which had the lowest validation loss (0.131). The v4 experiment reached a best validation loss of 0.108.
+- Speaker consistency is the weakest part. For the submitted 8B model, text recovery is about 0.82 but speaker plus text is 0.46. The 32B experiment improved both (0.87 and 0.55) and still shows the same gap.
 
 ## Approach and experiments
 
@@ -67,7 +74,7 @@ Facts to keep in mind when reading the table:
 
 **What I built and what I reused.** Which parts are your own (prompt, split, loss on answer tokens only, parser, early stopping, evaluation) and which are external (Qwen models, PEFT, transformers, marimo, three.js, Streamlit)?
 
-**Experiments.** What did you change between v1, v2 and v3, and what did each change do to the scores?
+**Experiments.** What did you change between v1 to v4, and what did each change do to the scores?
 
 **What failed.** Pick two or three real examples from `outputs/` (for example sequences where several characters were merged into one label, or a page the model missed).
 
