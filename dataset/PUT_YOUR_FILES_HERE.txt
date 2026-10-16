@@ -1,0 +1,3 @@
+Copy dataset/sequences.json and the dataset/test folder from your own dataset folder into here.
+Final paths: dataset/sequences.json and dataset/test/...
+Delete this note afterwards (optional).
