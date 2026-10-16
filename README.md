@@ -2,7 +2,7 @@
 
 Reads three consecutive English manga pages and returns the story text in reading order, with a speaker label on every line. The same character keeps the same label across all three pages.
 
-**Live app:** `https://bytedemourl.streamlit.app/`
+**Live app:** `<https://bytedemourl.streamlit.app/>`
 
 **Model used for the submission:** Qwen3-VL-8B with a LoRA adapter fine-tuned on our labelled sequences (run v3 below). The test predictions, the adapter and this app all come from that run. We also trained a larger Qwen3-VL-32B model as an experiment (run v4). It scored higher on the held-out data, but it is not part of the submission.
 
